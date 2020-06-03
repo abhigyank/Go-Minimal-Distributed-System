@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"encoding/json"
 )
 import "flag"
 import "net"
@@ -25,18 +26,26 @@ func createMaster (port string) {
 		} else {
 			fmt.Println("Received connection to master.")
 			// Code here for add node to cluster
+			var requestMessage map[string]string;
+			json.NewDecoder(conn).Decode(&requestMessage)
+			fmt.Println("Got request: " + requestMessage["message"] + " \nFrom node at port: " + requestMessage["myPort"])
 			conn.Close()
 		}
 	}
 }
 
 func connectToMaster(myPort string, masterPort string) {
-	 _, err := net.Dial("tcp", fmt.Sprint(ipAddress + ":" + masterPort))
-	 if err != nil {
+	conn, err := net.Dial("tcp", fmt.Sprint(ipAddress + ":" + masterPort))
+	if err != nil {
         fmt.Println("Couldn't connect to master.")
         os.Exit(0)
     } else {
     	fmt.Println("Connection to master successful.")
+    	requestInfo:= make(map[string]string)
+    	requestText := "Add me to the cluster."
+    	requestInfo["message"] = requestText
+    	requestInfo["myPort"] = myPort
+    	json.NewEncoder(conn).Encode(requestInfo)
     }
 }
 
